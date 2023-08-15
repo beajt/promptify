@@ -1,8 +1,10 @@
 import NextAuth from "next-auth/next";
-import GoogleProvider from 'next-auth/providers/google';
+import GoogleProvider from "next-auth/providers/google";
 
 import User from "@models/user";
 import { connectToDB } from "@utils/database";
+
+console.log(process.env.GOOGLE_ID, process.env.GOOGLE_CLIENT_SECRET);
 
 const handler = NextAuth({
   providers: [
@@ -11,12 +13,12 @@ const handler = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
   ],
-  
-  callback: {
+  callbacks: {
     async session({ session }) {
       const sessionUser = await User.findOne({
         email: session.user.email,
       });
+      console.log("found user");
 
       session.user.id = sessionUser._id.toString();
 
@@ -29,12 +31,13 @@ const handler = NextAuth({
         const userExists = await User.findOne({
           email: profile.email,
         });
+        console.log("user existd", profile);
 
         // if not, create a new user
         if (!userExists) {
           await User.create({
             email: profile.email,
-            username: profile.username.replace("", "").toLowerCase(),
+            username: profile.name.replace(" ", "").toLowerCase(),
             image: profile.picture,
           });
         }
@@ -46,6 +49,6 @@ const handler = NextAuth({
       }
     },
   },
-}); 
+});
 
-export {handler as GET, handler as POST};
+export { handler as GET, handler as POST };
